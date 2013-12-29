@@ -1,7 +1,16 @@
 #include "obid.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
+
+#define CODE2CHAR(c) ((c) == 63 ? '|' :         \
+                      ((c) == 62 ? '_' :         \
+                       ((c) >= 36 ? 'a' - 36 + c :      \
+                        ((c) >= 10 ? 'A' - 10 + c :     \
+                         '0' - 0 + (c)))))
+#define COMPONENT(i,k) ((i >> (6 * k)) & 63)
 
 obid_model_t * obid_create_model(int d)
 {
@@ -51,17 +60,67 @@ void obid_train(obid_model_t * model, const char * text)
         index = index * OBID_CHAR_COUNT % cc + index0;
         model->f[index]++;
         model->n++;
+
+#ifdef DEBUG
+        printf("index = %d, model->f[ %d %d %d ] '%c%c%c' = %lu, n = %lu\n", index,
+               COMPONENT(index, 2),
+               COMPONENT(index, 1),
+               COMPONENT(index, 0),
+               CODE2CHAR(COMPONENT(index, 2)),
+               CODE2CHAR(COMPONENT(index, 1)),
+               CODE2CHAR(COMPONENT(index, 0)),
+               model->f[index],
+               model->n);
+#endif
     
         p++;
     }
 }
 
-void obid_load_model(obid_model_t * model, const char * file)
+int obid_load_model(obid_model_t * model, const char * file)
 {
+    FILE * fin;
+    size_t l = 1;
+
+    fin = fopen(file, "r");
+    if (!fin) {
+        return 0;
+    }
+
+    fscanf(fin, "%lu %d", &model->n, &model->d);
+    
+    for (int i = 0; i < model->d; i++) {
+        l *= OBID_CHAR_COUNT;
+    }
+    for (int i = 0; i < l; i++) {
+        fscanf(fin, "%lu", &model->f[i]);
+    }
+    
+    fclose(fin);
+    return 1;
 }
 
-void obid_save_model(obid_model_t * model, const char * file)
+int obid_save_model(obid_model_t * model, const char * file)
 {
+    FILE * fout;
+    size_t l = 1;
+
+    fout = fopen(file, "w");
+    if (!fout) {
+        return 0;
+    }
+
+    fprintf(fout, "%lu %d\n", model->n, model->d);
+    
+    for (int i = 0; i < model->d; i++) {
+        l *= OBID_CHAR_COUNT;
+    }
+    for (int i = 0; i < l; i++) {
+        fprintf(fout, "%lu\n", model->f[i]);
+    }
+
+    fclose(fout);
+    return 1;
 }
 
 double obid_check_word(obid_model_t * model, const char * word)
@@ -93,8 +152,9 @@ double obid_check_word(obid_model_t * model, const char * word)
             index0 = OBID_SEPARATOR_INDEX;
 
         index = index * OBID_CHAR_COUNT % cc + index0;
-        printf(" [%02d] %c: %.4f\n", (p - word), *p, model->f[index]);
+        printf(" [%02ld] %c: %.4f\n", (p - word), *p, 1.0 * model->f[index] / model->n);
     
         p++;
     }
+    return 0.0;
 }

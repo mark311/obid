@@ -15,4 +15,11 @@ typedef struct {
     int d;
 } obid_model_t;
 
+obid_model_t * obid_create_model(int d);
+void obid_destroy_model(obid_model_t * model);
+void obid_train(obid_model_t * model, const char * text);
+int obid_load_model(obid_model_t * model, const char * file);
+int obid_save_model(obid_model_t * model, const char * file);
+double obid_check_word(obid_model_t * model, const char * word);
+
 #endif //_OBID_H_
