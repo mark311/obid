@@ -162,7 +162,7 @@ double obid_check_word(obid_model_t * model, const char * word)
         double f = 1.0 * model->f[index] / model->n;
         int g = (int)(f == 0.0 ? 0 : 100* sqrt(sqrt(f)));
         printf(" [%02ld] %c: %.8f [", (p - word), *p, f);
-        for (int i = 0; i < 100; i++)
+        for (i = 0; i < 100; i++)
             if (i < g)
                 printf(".");
             else
