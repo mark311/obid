@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
+#include <math.h>
 
 #define CODE2CHAR(c) ((c) == 63 ? '|' :         \
                       ((c) == 62 ? '_' :         \
@@ -128,7 +129,9 @@ double obid_check_word(obid_model_t * model, const char * word)
     const char * p = word;
     int index, index0, cc;
 
+#ifdef DEBUG
     printf("Probs for word: %s\n", word);
+#endif
 
     index = 0;
     cc = 1;
@@ -152,7 +155,17 @@ double obid_check_word(obid_model_t * model, const char * word)
             index0 = OBID_SEPARATOR_INDEX;
 
         index = index * OBID_CHAR_COUNT % cc + index0;
-        printf(" [%02ld] %c: %.4f\n", (p - word), *p, 1.0 * model->f[index] / model->n);
+#ifdef DEBUG
+        double f = 1.0 * model->f[index] / model->n;
+        int g = (int)(f == 0.0 ? 0 : 100* sqrt(sqrt(f)));
+        printf(" [%02ld] %c: %.8f [", (p - word), *p, f);
+        for (int i = 0; i < 100; i++)
+            if (i < g)
+                printf(".");
+            else
+                printf(" ");
+        printf("]\n");
+#endif
     
         p++;
     }

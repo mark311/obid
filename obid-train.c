@@ -39,9 +39,7 @@ int main(int argc, char* args[])
     
     for (int i = 2; i < argc; i++) {
         training_file = args[i];
-#ifdef DEBUG
-        printf("training %s ...\n", training_file);
-#endif        
+        printf("[%d/%d] training %s ...\n", i - 1, argc - 2, training_file);
         readfile(training_file, &buffer);
         obid_train(model, buffer);
         free(buffer);
