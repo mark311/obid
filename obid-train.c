@@ -26,6 +26,7 @@ int main(int argc, char* args[])
     char * training_file;
     char * buffer;
     obid_model_t * model = obid_create_model(3);
+    int i;
     
     if (argc < 3) {
         printf("Usage: obid-train <model-file> <training-files> ...\n");
@@ -37,7 +38,7 @@ int main(int argc, char* args[])
         obid_load_model(model, model_file);
     }
     
-    for (int i = 2; i < argc; i++) {
+    for (i = 2; i < argc; i++) {
         training_file = args[i];
         printf("[%d/%d] training %s ...\n", i - 1, argc - 2, training_file);
         readfile(training_file, &buffer);

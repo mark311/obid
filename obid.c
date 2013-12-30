@@ -17,7 +17,8 @@ obid_model_t * obid_create_model(int d)
 {
     obid_model_t * model = (obid_model_t*) malloc(sizeof(obid_model_t));
     size_t l = 1;
-    for (int i = 0; i < d; i++) {
+    int i;
+    for (i = 0; i < d; i++) {
         l *= OBID_CHAR_COUNT;
     }
     model->f = (unsigned long*) malloc(sizeof(unsigned long) * l);
@@ -35,11 +36,11 @@ void obid_destroy_model(obid_model_t * model)
 void obid_train(obid_model_t * model, const char * text)
 {
     const char * p = text;
-    int index, index0, cc;
+    int i, index, index0, cc;
 
     index = 0;
     cc = 1;
-    for (int i = 0; i < model->d; i++) {
+    for (i = 0; i < model->d; i++) {
         index *= OBID_CHAR_COUNT;
         index += OBID_SEPARATOR_INDEX;
         cc *= OBID_CHAR_COUNT;
@@ -82,6 +83,7 @@ int obid_load_model(obid_model_t * model, const char * file)
 {
     FILE * fin;
     size_t l = 1;
+    int i;
 
     fin = fopen(file, "r");
     if (!fin) {
@@ -90,10 +92,10 @@ int obid_load_model(obid_model_t * model, const char * file)
 
     fscanf(fin, "%lu %d", &model->n, &model->d);
     
-    for (int i = 0; i < model->d; i++) {
+    for (i = 0; i < model->d; i++) {
         l *= OBID_CHAR_COUNT;
     }
-    for (int i = 0; i < l; i++) {
+    for (i = 0; i < l; i++) {
         fscanf(fin, "%lu", &model->f[i]);
     }
     
@@ -105,6 +107,7 @@ int obid_save_model(obid_model_t * model, const char * file)
 {
     FILE * fout;
     size_t l = 1;
+    int i;
 
     fout = fopen(file, "w");
     if (!fout) {
@@ -113,10 +116,10 @@ int obid_save_model(obid_model_t * model, const char * file)
 
     fprintf(fout, "%lu %d\n", model->n, model->d);
     
-    for (int i = 0; i < model->d; i++) {
+    for (i = 0; i < model->d; i++) {
         l *= OBID_CHAR_COUNT;
     }
-    for (int i = 0; i < l; i++) {
+    for (i = 0; i < l; i++) {
         fprintf(fout, "%lu\n", model->f[i]);
     }
 
@@ -127,7 +130,7 @@ int obid_save_model(obid_model_t * model, const char * file)
 double obid_check_word(obid_model_t * model, const char * word)
 {
     const char * p = word;
-    int index, index0, cc;
+    int i, index, index0, cc;
 
 #ifdef DEBUG
     printf("Probs for word: %s\n", word);
@@ -135,7 +138,7 @@ double obid_check_word(obid_model_t * model, const char * word)
 
     index = 0;
     cc = 1;
-    for (int i = 0; i < model->d; i++) {
+    for (i = 0; i < model->d; i++) {
         index *= OBID_CHAR_COUNT;
         index += OBID_SEPARATOR_INDEX;
         cc *= OBID_CHAR_COUNT;
