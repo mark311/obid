@@ -127,14 +127,11 @@ int obid_save_model(obid_model_t * model, const char * file)
     return 1;
 }
 
-double obid_check_word(obid_model_t * model, const char * word)
+int obid_check_word(obid_model_t * model, obid_result_t * result, const char * word)
 {
     const char * p = word;
     int i, index, index0, cc;
-
-#ifdef DEBUG
-    printf("Probs for word: %s\n", word);
-#endif
+    double f;
 
     index = 0;
     cc = 1;
@@ -158,19 +155,18 @@ double obid_check_word(obid_model_t * model, const char * word)
             index0 = OBID_SEPARATOR_INDEX;
 
         index = index * OBID_CHAR_COUNT % cc + index0;
-#ifdef DEBUG
-        double f = 1.0 * model->f[index] / model->n;
-        int g = (int)(f == 0.0 ? 0 : 100* sqrt(sqrt(f)));
-        printf(" [%02ld] %c: %.8f [", (p - word), *p, f);
-        for (i = 0; i < 100; i++)
-            if (i < g)
-                printf(".");
-            else
-                printf(" ");
-        printf("]\n");
-#endif
-    
+        f = 1.0 * model->f[index] / model->n;
+
+        if (result->letters && result->farray &&
+            result->flen > 0 && p - word < result->flen)
+        {
+            result->letters[p - word] = *p;
+            result->farray[p - word] = f;
+        }
         p++;
     }
-    return 0.0;
+
+    result->flen = p - word;
+    result->obf = 0.0;
+    return 1;
 }
