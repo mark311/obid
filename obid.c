@@ -131,7 +131,12 @@ int obid_check_word(obid_model_t * model, obid_result_t * result, const char * w
 {
     const char * p = word;
     int i, index, index0, cc;
-    double f;
+    double f, fsum;
+    int f_verbose = 0;
+
+    if (result->letters && result->farray && result->flen > 0) {
+        f_verbose = 1;
+    }
 
     index = 0;
     cc = 1;
@@ -142,6 +147,7 @@ int obid_check_word(obid_model_t * model, obid_result_t * result, const char * w
     }
     assert(index < cc);
 
+    fsum = 0;
     while (*p) {
         if (isdigit(*p))
             index0 = OBID_NUMBER_INDEX(*p);
@@ -156,17 +162,16 @@ int obid_check_word(obid_model_t * model, obid_result_t * result, const char * w
 
         index = index * OBID_CHAR_COUNT % cc + index0;
         f = 1.0 * model->f[index] / model->n;
+        fsum += f;
 
-        if (result->letters && result->farray &&
-            result->flen > 0 && p - word < result->flen)
-        {
+        if (p - word < result->flen) {
             result->letters[p - word] = *p;
             result->farray[p - word] = f;
         }
         p++;
     }
 
-    result->flen = p - word;
-    result->obf = 0.0;
+    result->flen = (p - word > result->flen ? result->flen : p - word);
+    result->obf = fsum / (p - word);
     return 1;
 }
