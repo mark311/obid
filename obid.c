@@ -127,10 +127,24 @@ int obid_save_model(obid_model_t * model, const char * file)
     return 1;
 }
 
+static inline int _obid_index_of_char(const char c)
+{
+    if (isdigit(c))
+        return OBID_NUMBER_INDEX(c);
+    else if (isupper(c))
+        return OBID_UPPER_LETTER_INDEX(c);
+    else if (islower(c))
+        return OBID_LOWER_LETTER_INDEX(c);
+    else if (c == '_')
+        return OBID_UNDERLINE_INDEX;
+    else
+        return OBID_SEPARATOR_INDEX;
+}
+
 int obid_check_word(obid_model_t * model, obid_result_t * result, const char * word)
 {
     const char * p = word;
-    int i, index, index0, cc;
+    int i, j, index, index0, cc, len, start;
     double f, fsum;
     int f_verbose = 0;
 
@@ -138,40 +152,47 @@ int obid_check_word(obid_model_t * model, obid_result_t * result, const char * w
         f_verbose = 1;
     }
 
+    len = strlen(word);
+    fsum = 0;
+    j = 0;
+
     index = 0;
     cc = 1;
-    for (i = 0; i < model->d; i++) {
+    start  = len > model->d ? 0 : len - model->d;
+
+    for (i = start; i < start + model->d; i++) {
         index *= OBID_CHAR_COUNT;
-        index += OBID_SEPARATOR_INDEX;
+        index += (i < 0 ? OBID_SEPARATOR_INDEX : _obid_index_of_char(word[i]));
         cc *= OBID_CHAR_COUNT;
+
+        if (f_verbose) {
+            result->letters[j] = (i < 0 ? '|' : word[i]);
+            result->farray[j] = -1.0;
+            j++;
+        }
     }
-    assert(index < cc);
 
-    fsum = 0;
-    while (*p) {
-        if (isdigit(*p))
-            index0 = OBID_NUMBER_INDEX(*p);
-        else if (isupper(*p))
-            index0 = OBID_UPPER_LETTER_INDEX(*p);
-        else if (islower(*p))
-            index0 = OBID_LOWER_LETTER_INDEX(*p);
-        else if (*p == '_')
-            index0 = OBID_UNDERLINE_INDEX;
-        else
-            index0 = OBID_SEPARATOR_INDEX;
+    f = 1.0 * model->f[index] / model->n;
+    fsum += f;
+    if (f_verbose) {
+        result->farray[j - 1] = f;
+    }
 
-        index = index * OBID_CHAR_COUNT % cc + index0;
+    for (p = word + start + model->d; p != word + len; p++) {
+        index = index * OBID_CHAR_COUNT % cc + _obid_index_of_char(*p);
         f = 1.0 * model->f[index] / model->n;
         fsum += f;
 
-        if (p - word < result->flen) {
-            result->letters[p - word] = *p;
-            result->farray[p - word] = f;
+        if (f_verbose && j < result->flen) {
+            result->letters[j] = *p;
+            result->farray[j] = f;
+            j++;
         }
-        p++;
     }
 
-    result->flen = (p - word > result->flen ? result->flen : p - word);
+    if (f_verbose)
+        result->flen = (j > result->flen ? result->flen : j);
+
     result->obf = fsum / (p - word);
     return 1;
 }
