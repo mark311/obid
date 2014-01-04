@@ -8,6 +8,28 @@
 
 #define MAX_LETTER_NUMBER 40
 
+int opt_verbose = 0;
+int opt_summary = 0;
+int opt_train = 0;
+char * opt_model_file = "obid.model";
+
+int readfile(const char * filename, char **buffer)
+{
+    FILE *f = fopen(filename, "rb");
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char *string = malloc(fsize + 1);
+    fread(string, fsize, 1, f);
+    fclose(f);
+
+    string[fsize] = 0;
+    *buffer = string;
+
+    return 1;
+}
+
 static char* readline(FILE *input)
 {
     static int max_line_len = 1024;
@@ -48,42 +70,33 @@ void usage()
 {
     printf("Usage:\n"
            "  obid-demo <options>\n"
+           "  obid-demo -T|--train file1 file2 ...\n"
            "\n"
            "Option:\n"
            "  -v,--verbose, enable verbose mode.\n"
            "  -m,--model, specify model file, default is \"obid.model\"\n"
            "  -S,--summary, print the average frequency summary\n"
+           "  -T,--train, train the model with given files\n"
            "\n");
 }
 
-int main(int argc, char* argv[])
+void parse_options(int *pargc, char **(*pargv))
 {
-    int i, j, g, len;
-    double f, h, t;
-    char * model_file = "obid.model";
-    char * line = NULL;
+    int argc = *pargc;
+    char **argv = *pargv;
     char ch;
-    obid_model_t * model = NULL;
-    char letters[MAX_LETTER_NUMBER];
-    double farray[MAX_LETTER_NUMBER];
-    obid_result_t result = {0.0, letters, farray, MAX_LETTER_NUMBER};
-    double avg_f[MAX_LETTER_NUMBER];
-    double avg_f2[MAX_LETTER_NUMBER];
-    int avg_n[MAX_LETTER_NUMBER];
-    int opt_verbose = 0;
-    int opt_summary = 0;
-    FILE *fin = stdin;
 
     /* options descriptor */
     static struct option longopts[] = {
             { "verbose",    no_argument,            NULL,           'v' },
             { "model",      required_argument,      NULL,           'm' },
             { "summary",    no_argument,            NULL,           'S' },
+            { "train",      no_argument,            NULL,           'T' },
             { "help",       no_argument,            NULL,           'h' },
             { NULL,         0,                      NULL,           0 }
     };
 
-    while ((ch = getopt_long(argc, argv, "vm:Sh", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "vm:STh", longopts, NULL)) != -1) {
         switch (ch) {
         case 'v':
             opt_verbose = 1;
@@ -91,8 +104,11 @@ int main(int argc, char* argv[])
         case 'S':
             opt_summary = 1;
             break;
+        case 'T':
+            opt_train = 1;
+            break;
         case 'm':
-            model_file = optarg;
+            opt_model_file = optarg;
             break;
         case 'h':
         default:
@@ -100,11 +116,51 @@ int main(int argc, char* argv[])
             exit(1);
         }
     }
-    argc -= optind;
-    argv += optind;
+    *pargc -= optind;
+    *pargv += optind;
+}
+
+int train(int argc, char *argv[])
+{
+    char * training_file;
+    char * buffer;
+    obid_model_t * model = obid_create_model(3);
+    int i;
+    
+    if (0 == access(opt_model_file, F_OK)) {
+        obid_load_model(model, opt_model_file);
+    }
+    
+    for (i = 0; i < argc; i++) {
+        training_file = argv[i];
+        printf("[%d/%d] training %s ...\n", i + 1, argc, training_file);
+        readfile(training_file, &buffer);
+        obid_train(model, buffer);
+        free(buffer);
+    }
+
+    obid_save_model(model, opt_model_file);
+    obid_destroy_model(model);
+    
+    return 0;
+}
+
+int interactive(int argc, char *argv[])
+{
+    int i, j, g, len;
+    double f, h, t;
+    char * line = NULL;
+    obid_model_t * model = NULL;
+    char letters[MAX_LETTER_NUMBER];
+    double farray[MAX_LETTER_NUMBER];
+    obid_result_t result = {0.0, letters, farray, MAX_LETTER_NUMBER};
+    double avg_f[MAX_LETTER_NUMBER];
+    double avg_f2[MAX_LETTER_NUMBER];
+    int avg_n[MAX_LETTER_NUMBER];
+    FILE *fin = stdin;
 
     model = obid_create_model(3);
-    obid_load_model(model, model_file);
+    obid_load_model(model, opt_model_file);
 
     if (argc >= 1) {
         fin = fopen(argv[0], "r");
@@ -114,7 +170,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    printf("Loaded model file: %s\n", model_file);
+    printf("Loaded model file: %s\n", opt_model_file);
     if (opt_verbose) {
         printf("Enabled verbose mode\n");
     }
@@ -176,4 +232,15 @@ int main(int argc, char* argv[])
     readline(NULL);
 
     return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    parse_options(&argc, &argv);
+
+    if (opt_train) {
+        return train(argc, argv);
+    } else {
+        return interactive(argc, argv);
+    }
 }

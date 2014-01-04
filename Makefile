@@ -1,8 +1,4 @@
-all: obid-demo obid-train
+all: obid
 
-obid-demo: obid.c main.c
-	gcc -g -DDEBUG -o obid-demo obid.c main.c -lm
-obid-train: obid.c obid-train.c
-	#gcc -g -DDEBUG -o obid-train obid.c obid-train.c -lm
-	gcc -o obid-train obid.c obid-train.c -lm
-
+obid: obid.c main.c
+	gcc -g -DDEBUG -o obid obid.c main.c -lm
