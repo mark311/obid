@@ -9,6 +9,8 @@
 
 #define OBID_CHAR_COUNT 64
 
+#define OBID_MAX_WORD_LENGTH 40
+
 typedef struct {
     unsigned long *f;
     unsigned long n;

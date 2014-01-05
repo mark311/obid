@@ -6,8 +6,6 @@
 #include <string.h>
 #include <assert.h>
 
-#define MAX_LETTER_NUMBER 40
-
 int opt_verbose = 0;
 int opt_summary = 0;
 int opt_train = 0;
@@ -151,12 +149,12 @@ int interactive(int argc, char *argv[])
     double f, h, t;
     char * line = NULL;
     obid_model_t * model = NULL;
-    char letters[MAX_LETTER_NUMBER];
-    double farray[MAX_LETTER_NUMBER];
-    obid_result_t result = {0.0, letters, farray, MAX_LETTER_NUMBER};
-    double avg_f[MAX_LETTER_NUMBER];
-    double avg_f2[MAX_LETTER_NUMBER];
-    int avg_n[MAX_LETTER_NUMBER];
+    char letters[OBID_MAX_WORD_LENGTH];
+    double farray[OBID_MAX_WORD_LENGTH];
+    obid_result_t result = {0.0, letters, farray, OBID_MAX_WORD_LENGTH};
+    double avg_f[OBID_MAX_WORD_LENGTH];
+    double avg_f2[OBID_MAX_WORD_LENGTH];
+    int avg_n[OBID_MAX_WORD_LENGTH];
     FILE *fin = stdin;
 
     model = obid_create_model(3);
@@ -176,7 +174,7 @@ int interactive(int argc, char *argv[])
     }
 
     if (opt_summary) {
-        for (i = 0; i < MAX_LETTER_NUMBER; i++) {
+        for (i = 0; i < OBID_MAX_WORD_LENGTH; i++) {
             avg_f[i] = 0.0;
             avg_f2[i] = 0.0;
             avg_n[i] = 0;
@@ -185,7 +183,7 @@ int interactive(int argc, char *argv[])
 
     while ((line = readline(fin))) {
         len = strlen(line);
-        result.flen = MAX_LETTER_NUMBER; // set the max length for the arrays in result.
+        result.flen = OBID_MAX_WORD_LENGTH; // set the max length for the arrays in result.
         obid_check_word(model, &result, line);
 
         if (opt_verbose) {
@@ -203,7 +201,7 @@ int interactive(int argc, char *argv[])
             }
         }
 
-        if (opt_summary && len < MAX_LETTER_NUMBER) {
+        if (opt_summary && len < OBID_MAX_WORD_LENGTH) {
             avg_f[len] += result.obf;
             avg_f2[len] += result.obf * result.obf;
             avg_n[len] += 1;
@@ -216,7 +214,7 @@ int interactive(int argc, char *argv[])
     if (opt_summary) {
         printf("Word Len.\tAvg. Frequency\tStD. Frequency\t Min Frequency\t Max Frequency\n");
         printf("---------\t--------------\t--------------\t--------------\t--------------\n");
-        for (i = 0; i < MAX_LETTER_NUMBER; i++) {
+        for (i = 0; i < OBID_MAX_WORD_LENGTH; i++) {
             f = avg_f[i] / avg_n[i];
             t = sqrt(avg_f2[i] / avg_n[i] - f * f);
             printf("%9d\t%14.8f\t%14.8f\t%14.8f\t%14.8f\n", i, f, t, f - t / 2, f + t / 2);

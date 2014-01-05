@@ -13,6 +13,20 @@
                          '0' - 0 + (c)))))
 #define COMPONENT(i,k) ((i >> (6 * k)) & 63)
 
+static inline int _obid_index_of_char(const char c)
+{
+    if (isdigit(c))
+        return OBID_NUMBER_INDEX(c);
+    else if (isupper(c))
+        return OBID_UPPER_LETTER_INDEX(c);
+    else if (islower(c))
+        return OBID_LOWER_LETTER_INDEX(c);
+    else if (c == '_')
+        return OBID_UNDERLINE_INDEX;
+    else
+        return OBID_SEPARATOR_INDEX;
+}
+
 obid_model_t * obid_create_model(int d)
 {
     obid_model_t * model = (obid_model_t*) malloc(sizeof(obid_model_t));
@@ -36,7 +50,8 @@ void obid_destroy_model(obid_model_t * model)
 void obid_train(obid_model_t * model, const char * text)
 {
     const char * p = text;
-    int i, index, index0, cc;
+    int i, index, index0, index1, cc;
+    int len;
 
     index = 0;
     cc = 1;
@@ -45,35 +60,30 @@ void obid_train(obid_model_t * model, const char * text)
         index += OBID_SEPARATOR_INDEX;
         cc *= OBID_CHAR_COUNT;
     }
+    index0 = index;
     assert(index < cc);
 
     while (*p) {
-        if (isdigit(*p))
-            index0 = OBID_NUMBER_INDEX(*p);
-        else if (isupper(*p))
-            index0 = OBID_UPPER_LETTER_INDEX(*p);
-        else if (islower(*p))
-            index0 = OBID_LOWER_LETTER_INDEX(*p);
-        else if (*p == '_')
-            index0 = OBID_UNDERLINE_INDEX;
-        else
-            index0 = OBID_SEPARATOR_INDEX;
-
-        index = index * OBID_CHAR_COUNT % cc + index0;
-        model->f[index]++;
-        model->n++;
+        index1 = _obid_index_of_char(*p);
+        if (index1 == OBID_SEPARATOR_INDEX) {
+            index = index0;
+        } else {
+            index = index * OBID_CHAR_COUNT % cc + index1;
+            model->f[index]++;
+            model->n++;
 
 #ifdef DEBUG
-        printf("index = %d, model->f[ %d %d %d ] '%c%c%c' = %lu, n = %lu\n", index,
-               COMPONENT(index, 2),
-               COMPONENT(index, 1),
-               COMPONENT(index, 0),
-               CODE2CHAR(COMPONENT(index, 2)),
-               CODE2CHAR(COMPONENT(index, 1)),
-               CODE2CHAR(COMPONENT(index, 0)),
-               model->f[index],
-               model->n);
+            printf("index = %d, model->f[ %d %d %d ] '%c%c%c' = %lu, n = %lu\n", index,
+                   COMPONENT(index, 2),
+                   COMPONENT(index, 1),
+                   COMPONENT(index, 0),
+                   CODE2CHAR(COMPONENT(index, 2)),
+                   CODE2CHAR(COMPONENT(index, 1)),
+                   CODE2CHAR(COMPONENT(index, 0)),
+                   model->f[index],
+                   model->n);
 #endif
+        }
     
         p++;
     }
@@ -125,20 +135,6 @@ int obid_save_model(obid_model_t * model, const char * file)
 
     fclose(fout);
     return 1;
-}
-
-static inline int _obid_index_of_char(const char c)
-{
-    if (isdigit(c))
-        return OBID_NUMBER_INDEX(c);
-    else if (isupper(c))
-        return OBID_UPPER_LETTER_INDEX(c);
-    else if (islower(c))
-        return OBID_LOWER_LETTER_INDEX(c);
-    else if (c == '_')
-        return OBID_UNDERLINE_INDEX;
-    else
-        return OBID_SEPARATOR_INDEX;
 }
 
 int obid_check_word(obid_model_t * model, obid_result_t * result, const char * word)
