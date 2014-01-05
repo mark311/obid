@@ -11,6 +11,22 @@
 
 #define OBID_MAX_WORD_LENGTH 40
 
+/*
+ * Each characters in this model will be assigned with a specified
+ * index. Following shows how characters are mapped to index.
+ *
+ *   '0' ~ '9' => 0 ~ 9
+ *   'A' ~ 'Z' => 10 ~ 35
+ *   'a' ~ 'z' => 36 ~ 61
+ *         '_' => 62
+ *       other => 63
+ *
+ * Function f(c1,c2,...,cn) is the probability of the occurance of
+ * sequence c1,c2,...,cn in normal texts. ci may be a character or the
+ * index of it. The number of parameters of f is just the dimension of
+ * the model.
+ *
+ */
 typedef struct {
     unsigned long *f;
     unsigned long n;
