@@ -6,6 +6,10 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
 int opt_verbose = 0;
 int opt_summary = 0;
 int opt_train = 0;
