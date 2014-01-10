@@ -29,6 +29,8 @@ static inline int _obid_index_of_char(const char c)
 
 obid_model_t * obid_create_model(int d)
 {
+    assert(d >= 2);
+
     obid_model_t * model = (obid_model_t*) malloc(sizeof(obid_model_t));
     size_t l = 1;
     int i;
