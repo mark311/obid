@@ -22,6 +22,7 @@
  *       other => 63
  *
  * f(B,c) = P(c|B) = P(Bc) / P(B)
+ *
  */
 typedef struct {
     unsigned long *f;
