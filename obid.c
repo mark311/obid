@@ -38,7 +38,10 @@ obid_model_t * obid_create_model(int d)
         l *= OBID_CHAR_COUNT;
     }
     model->f = (unsigned long*) malloc(sizeof(unsigned long) * l);
+    model->g = (unsigned long*) malloc(sizeof(unsigned long) * l / OBID_CHAR_COUNT);
     memset(model->f, 0, sizeof(unsigned long) * l);
+    memset(model->g, 0, sizeof(unsigned long) * l / OBID_CHAR_COUNT);
+
     model->d = d;
     model->n = 0;
     return model;
@@ -72,6 +75,7 @@ void obid_train(obid_model_t * model, const char * text)
         } else {
             index = index * OBID_CHAR_COUNT % cc + index1;
             model->f[index]++;
+            model->g[index / OBID_CHAR_COUNT]++;
             model->n++;
 
 #ifdef DEBUG
@@ -107,8 +111,13 @@ int obid_load_model(obid_model_t * model, const char * file)
     for (i = 0; i < model->d; i++) {
         l *= OBID_CHAR_COUNT;
     }
+
+    memset(model->f, 0, sizeof(unsigned long) * l);
+    memset(model->g, 0, sizeof(unsigned long) * l / OBID_CHAR_COUNT);
+
     for (i = 0; i < l; i++) {
         fscanf(fin, "%lu", &model->f[i]);
+        model->g[i / OBID_CHAR_COUNT] += model->f[i];
     }
     
     fclose(fin);
@@ -170,7 +179,7 @@ int obid_check_word(obid_model_t * model, obid_result_t * result, const char * w
         }
     }
 
-    f = 1.0 * model->f[index] / model->n;
+    f = 1.0 * model->f[index] / model->g[index / OBID_CHAR_COUNT];
     fsum += f;
     if (f_verbose) {
         result->farray[j - 1] = f;
@@ -178,7 +187,7 @@ int obid_check_word(obid_model_t * model, obid_result_t * result, const char * w
 
     for (p = word + start + model->d; p != word + len; p++) {
         index = index * OBID_CHAR_COUNT % cc + _obid_index_of_char(*p);
-        f = 1.0 * model->f[index] / model->n;
+        f = 1.0 * model->f[index] / model->g[index / OBID_CHAR_COUNT];
         fsum += f;
 
         if (f_verbose && j < result->flen) {

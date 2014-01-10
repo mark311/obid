@@ -193,7 +193,7 @@ int interactive(int argc, char *argv[])
         if (opt_verbose) {
             for (i = 0; i < result.flen; i++) {
                 f = result.farray[i];
-                g = (int)(f == 0.0 ? 0 : 100* sqrt(sqrt(f)));
+                g = (int)(f == 0.0 ? 0 : 100 * sqrt(sqrt(f)));
 
                 printf(" [%02d] %c: %.8f [", i, result.letters[i], f);
                 for (j = 0; j < 100; j++)

@@ -21,14 +21,12 @@
  *         '_' => 62
  *       other => 63
  *
- * Function f(c1,c2,...,cn) is the probability of the occurance of
- * sequence c1,c2,...,cn in normal texts. ci may be a character or the
- * index of it. The number of parameters of f is just the dimension of
- * the model.
+ * f(B,c) = P(c|B) = P(Bc) / P(B)
  *
  */
 typedef struct {
     unsigned long *f;
+    unsigned long *g;
     unsigned long n;
     int d;
 } obid_model_t;
